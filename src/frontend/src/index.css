@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --radius: 0.75rem;
+        
+        /* Soft orange theme for Nara community */
+        --background: 0.99 0.005 45;
+        --foreground: 0.25 0.015 45;
+        
+        --card: 1 0 0;
+        --card-foreground: 0.25 0.015 45;
+        
+        --popover: 1 0 0;
+        --popover-foreground: 0.25 0.015 45;
+        
+        /* Soft orange primary */
+        --primary: 0.70 0.15 45;
+        --primary-foreground: 1 0 0;
+        
+        /* Soft peach secondary */
+        --secondary: 0.95 0.02 40;
+        --secondary-foreground: 0.35 0.02 40;
+        
+        --muted: 0.96 0.01 45;
+        --muted-foreground: 0.55 0.02 45;
+        
+        --accent: 0.94 0.03 50;
+        --accent-foreground: 0.35 0.03 50;
+        
+        --destructive: 0.60 0.20 15;
+        --destructive-foreground: 1 0 0;
+        
+        --border: 0.92 0.01 45;
+        --input: 0.92 0.01 45;
+        --ring: 0.70 0.15 45;
+        
+        /* Soft orange for marketplace */
+        --marketplace: 0.70 0.15 45;
+        --marketplace-foreground: 1 0 0;
+        
+        --chart-1: 0.70 0.15 45;
+        --chart-2: 0.75 0.12 50;
+        --chart-3: 0.68 0.10 40;
+        --chart-4: 0.72 0.13 55;
+        --chart-5: 0.65 0.11 35;
+    }
+
+    .dark {
+        --background: 0.15 0.01 45;
+        --foreground: 0.95 0.01 45;
+        
+        --card: 0.20 0.015 45;
+        --card-foreground: 0.95 0.01 45;
+        
+        --popover: 0.18 0.015 45;
+        --popover-foreground: 0.95 0.01 45;
+        
+        /* Lighter orange for dark mode */
+        --primary: 0.75 0.15 45;
+        --primary-foreground: 0.15 0.01 45;
+        
+        --secondary: 0.25 0.02 45;
+        --secondary-foreground: 0.90 0.01 45;
+        
+        --muted: 0.25 0.015 45;
+        --muted-foreground: 0.65 0.02 45;
+        
+        --accent: 0.30 0.03 50;
+        --accent-foreground: 0.95 0.01 45;
+        
+        --destructive: 0.65 0.20 15;
+        --destructive-foreground: 0.95 0.01 45;
+        
+        --border: 0.30 0.02 45;
+        --input: 0.30 0.02 45;
+        --ring: 0.75 0.15 45;
+        
+        /* Soft orange for marketplace - adjusted for dark mode */
+        --marketplace: 0.75 0.15 45;
+        --marketplace-foreground: 0.15 0.01 45;
+        
+        --chart-1: 0.75 0.15 45;
+        --chart-2: 0.70 0.12 50;
+        --chart-3: 0.68 0.10 40;
+        --chart-4: 0.72 0.13 55;
+        --chart-5: 0.65 0.11 35;
+    }
+
+    * {
+        @apply border-border;
+    }
+    
+    body {
+        @apply bg-background text-foreground;
+        font-feature-settings: "rlig" 1, "calt" 1;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'DM Serif Display', serif;
+    }
+}
+
+@layer utilities {
+    .text-balance {
+        text-wrap: balance;
+    }
+}
