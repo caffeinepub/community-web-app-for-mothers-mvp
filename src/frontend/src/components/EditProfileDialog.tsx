@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Upload, X } from 'lucide-react';
 import { useSaveCallerUserProfile } from '../hooks/useQueries';
 import { toast } from 'sonner';
-import { ExternalBlob, Region, MotherhoodStatus, type UserProfile } from '../backend';
+import { ExternalBlob, Region, MotherhoodStatus, Country, type UserProfile } from '../backend';
 
 interface EditProfileDialogProps {
   open: boolean;
@@ -19,6 +19,7 @@ interface EditProfileDialogProps {
 
 export default function EditProfileDialog({ open, onOpenChange, currentProfile }: EditProfileDialogProps) {
   const [name, setName] = useState(currentProfile.name);
+  const [country, setCountry] = useState<Country | undefined>(currentProfile.country);
   const [location, setLocation] = useState<Region | undefined>(currentProfile.location);
   const [status, setStatus] = useState<MotherhoodStatus>(currentProfile.status);
   const [bio, setBio] = useState(currentProfile.bio || '');
@@ -31,6 +32,7 @@ export default function EditProfileDialog({ open, onOpenChange, currentProfile }
   useEffect(() => {
     if (open) {
       setName(currentProfile.name);
+      setCountry(currentProfile.country);
       setLocation(currentProfile.location);
       setStatus(currentProfile.status);
       setBio(currentProfile.bio || '');
@@ -87,6 +89,7 @@ export default function EditProfileDialog({ open, onOpenChange, currentProfile }
     try {
       await saveProfile.mutateAsync({
         name: name.trim(),
+        country,
         location,
         status,
         bio: bio.trim() || undefined,
@@ -180,12 +183,26 @@ export default function EditProfileDialog({ open, onOpenChange, currentProfile }
             />
           </div>
 
+          {/* Country */}
+          <div className="space-y-2">
+            <Label htmlFor="country">Pays</Label>
+            <Select value={country} onValueChange={(value) => setCountry(value as Country)}>
+              <SelectTrigger id="country">
+                <SelectValue placeholder="Choisis ton pays" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="switzerland">Suisse</SelectItem>
+                <SelectItem value="france">France</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Location */}
           <div className="space-y-2">
-            <Label htmlFor="location">Canton</Label>
+            <Label htmlFor="location">Canton / Région</Label>
             <Select value={location} onValueChange={(value) => setLocation(value as Region)}>
               <SelectTrigger id="location">
-                <SelectValue placeholder="Choisis ton canton" />
+                <SelectValue placeholder="Choisis ta région" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="geneva">Genève</SelectItem>

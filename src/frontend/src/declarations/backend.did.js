@@ -81,6 +81,10 @@ export const Post = IDL.Record({
   'timestamp' : Time,
   'category' : Category,
 });
+export const Country = IDL.Variant({
+  'france' : IDL.Null,
+  'switzerland' : IDL.Null,
+});
 export const MotherhoodStatus = IDL.Variant({
   'adultChildren' : IDL.Null,
   'postpartum' : IDL.Null,
@@ -92,6 +96,7 @@ export const MotherhoodStatus = IDL.Variant({
 export const UserProfile = IDL.Record({
   'bio' : IDL.Opt(IDL.Text),
   'status' : MotherhoodStatus,
+  'country' : IDL.Opt(Country),
   'favorites' : IDL.Vec(IDL.Nat),
   'name' : IDL.Text,
   'profilePicture' : IDL.Opt(ExternalBlob),
@@ -135,6 +140,8 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'countryIsFrance' : IDL.Func([], [IDL.Bool], ['query']),
+  'countryIsSwitzerland' : IDL.Func([], [IDL.Bool], ['query']),
   'createListing' : IDL.Func(
       [
         IDL.Text,
@@ -154,6 +161,7 @@ export const idlService = IDL.Service({
   'getAllConversations' : IDL.Func([], [IDL.Vec(Conversation)], ['query']),
   'getAllListings' : IDL.Func([], [IDL.Vec(Listing)], ['query']),
   'getAllPosts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
+  'getCallerCountry' : IDL.Func([], [IDL.Opt(Country)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getConversation' : IDL.Func(
@@ -266,6 +274,10 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : Time,
     'category' : Category,
   });
+  const Country = IDL.Variant({
+    'france' : IDL.Null,
+    'switzerland' : IDL.Null,
+  });
   const MotherhoodStatus = IDL.Variant({
     'adultChildren' : IDL.Null,
     'postpartum' : IDL.Null,
@@ -277,6 +289,7 @@ export const idlFactory = ({ IDL }) => {
   const UserProfile = IDL.Record({
     'bio' : IDL.Opt(IDL.Text),
     'status' : MotherhoodStatus,
+    'country' : IDL.Opt(Country),
     'favorites' : IDL.Vec(IDL.Nat),
     'name' : IDL.Text,
     'profilePicture' : IDL.Opt(ExternalBlob),
@@ -320,6 +333,8 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'countryIsFrance' : IDL.Func([], [IDL.Bool], ['query']),
+    'countryIsSwitzerland' : IDL.Func([], [IDL.Bool], ['query']),
     'createListing' : IDL.Func(
         [
           IDL.Text,
@@ -339,6 +354,7 @@ export const idlFactory = ({ IDL }) => {
     'getAllConversations' : IDL.Func([], [IDL.Vec(Conversation)], ['query']),
     'getAllListings' : IDL.Func([], [IDL.Vec(Listing)], ['query']),
     'getAllPosts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
+    'getCallerCountry' : IDL.Func([], [IDL.Opt(Country)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getConversation' : IDL.Func(

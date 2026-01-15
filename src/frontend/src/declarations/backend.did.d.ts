@@ -21,6 +21,8 @@ export interface Conversation {
   'participant2' : Principal,
   'messages' : Array<Message>,
 }
+export type Country = { 'france' : null } |
+  { 'switzerland' : null };
 export type ExternalBlob = Uint8Array;
 export interface Listing {
   'id' : bigint,
@@ -78,6 +80,7 @@ export type Time = bigint;
 export interface UserProfile {
   'bio' : [] | [string],
   'status' : MotherhoodStatus,
+  'country' : [] | [Country],
   'favorites' : Array<bigint>,
   'name' : string,
   'profilePicture' : [] | [ExternalBlob],
@@ -115,6 +118,8 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'countryIsFrance' : ActorMethod<[], boolean>,
+  'countryIsSwitzerland' : ActorMethod<[], boolean>,
   'createListing' : ActorMethod<
     [
       string,
@@ -133,6 +138,7 @@ export interface _SERVICE {
   'getAllConversations' : ActorMethod<[], Array<Conversation>>,
   'getAllListings' : ActorMethod<[], Array<Listing>>,
   'getAllPosts' : ActorMethod<[], Array<Post>>,
+  'getCallerCountry' : ActorMethod<[], [] | [Country]>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getConversation' : ActorMethod<[Principal], [] | [Conversation]>,

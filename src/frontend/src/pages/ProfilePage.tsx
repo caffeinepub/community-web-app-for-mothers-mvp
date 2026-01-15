@@ -4,13 +4,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MessageCircle, Edit, Heart, Clock, User } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Heart, User } from 'lucide-react';
 import { useGetUserProfile, useGetCallerUserProfile } from '../hooks/useQueries';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useQuery } from '@tanstack/react-query';
 import { useActor } from '../hooks/useActor';
 import type { Principal } from '@icp-sdk/core/principal';
-import type { Listing, Post, Region, MotherhoodStatus } from '../backend';
+import type { Listing, Post, Region, MotherhoodStatus, Country } from '../backend';
 import EditProfileDialog from '../components/EditProfileDialog';
 import ListingCard from '../components/ListingCard';
 import PostCard from '../components/PostCard';
@@ -90,6 +90,15 @@ export default function ProfilePage({ userPrincipal, onOpenChat, onBack, onViewP
     return labels[region];
   };
 
+  const getCountryLabel = (country: Country | undefined) => {
+    if (!country) return null;
+    const labels: Record<Country, string> = {
+      switzerland: 'Suisse',
+      france: 'France',
+    };
+    return labels[country];
+  };
+
   const getMotherhoodStatusLabel = (status: MotherhoodStatus) => {
     const labels: Record<MotherhoodStatus, string> = {
       tryingToConceive: 'Essais bébé',
@@ -100,22 +109,6 @@ export default function ProfilePage({ userPrincipal, onOpenChat, onBack, onViewP
       adultChildren: 'Mère d\'adulte·s',
     };
     return labels[status];
-  };
-
-  const formatTimestamp = (timestamp: bigint) => {
-    const date = new Date(Number(timestamp) / 1000000);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffDays === 0) return 'Aujourd\'hui';
-    if (diffDays === 1) return 'Hier';
-    if (diffDays < 7) return `Il y a ${diffDays} jours`;
-    if (diffDays < 30) {
-      const weeks = Math.floor(diffDays / 7);
-      return `Il y a ${weeks} semaine${weeks > 1 ? 's' : ''}`;
-    }
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   };
 
   if (isLoading) {
@@ -188,6 +181,11 @@ export default function ProfilePage({ userPrincipal, onOpenChat, onBack, onViewP
                 <div>
                   <h1 className="text-3xl font-heading mb-2">{userProfile.name}</h1>
                   <div className="flex flex-wrap gap-2 items-center text-sm text-muted-foreground">
+                    {userProfile.country && (
+                      <Badge variant="secondary" className="bg-marketplace/10 text-marketplace border-0">
+                        {getCountryLabel(userProfile.country)}
+                      </Badge>
+                    )}
                     {userProfile.location && (
                       <Badge variant="secondary" className="bg-marketplace/10 text-marketplace border-0">
                         {getRegionLabel(userProfile.location)}

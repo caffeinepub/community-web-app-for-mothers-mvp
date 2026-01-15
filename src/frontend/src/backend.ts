@@ -89,6 +89,12 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface Conversation {
+    id: bigint;
+    participant1: Principal;
+    participant2: Principal;
+    messages: Array<Message>;
+}
 export interface Reply {
     id: bigint;
     content: string;
@@ -133,15 +139,10 @@ export interface Message {
     timestamp: Time;
     receiver: Principal;
 }
-export interface Conversation {
-    id: bigint;
-    participant1: Principal;
-    participant2: Principal;
-    messages: Array<Message>;
-}
 export interface UserProfile {
     bio?: string;
     status: MotherhoodStatus;
+    country?: Country;
     favorites: Array<bigint>;
     name: string;
     profilePicture?: ExternalBlob;
@@ -157,6 +158,10 @@ export enum Category {
     mentalLoad = "mentalLoad",
     organization = "organization",
     pregnancy = "pregnancy"
+}
+export enum Country {
+    france = "france",
+    switzerland = "switzerland"
 }
 export enum MotherhoodStatus {
     adultChildren = "adultChildren",
@@ -194,12 +199,15 @@ export interface backendInterface {
     _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    countryIsFrance(): Promise<boolean>;
+    countryIsSwitzerland(): Promise<boolean>;
     createListing(title: string, description: string, price: bigint, condition: ProductCondition, region: Region, categories: Array<string>, ageGroup: string, images: Array<ExternalBlob>): Promise<bigint>;
     createPost(category: Category, content: string, isAnonymous: boolean): Promise<bigint>;
     createReply(postId: bigint, content: string, isAnonymous: boolean): Promise<bigint>;
     getAllConversations(): Promise<Array<Conversation>>;
     getAllListings(): Promise<Array<Listing>>;
     getAllPosts(): Promise<Array<Post>>;
+    getCallerCountry(): Promise<Country | null>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getConversation(participant: Principal): Promise<Conversation | null>;
@@ -222,7 +230,7 @@ export interface backendInterface {
     sendMessage(receiver: Principal, content: string): Promise<bigint>;
     toggleFavorite(listingId: bigint): Promise<boolean>;
 }
-import type { Category as _Category, Conversation as _Conversation, ExternalBlob as _ExternalBlob, Listing as _Listing, MotherhoodStatus as _MotherhoodStatus, Post as _Post, ProductCondition as _ProductCondition, Region as _Region, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { Category as _Category, Conversation as _Conversation, Country as _Country, ExternalBlob as _ExternalBlob, Listing as _Listing, MotherhoodStatus as _MotherhoodStatus, Post as _Post, ProductCondition as _ProductCondition, Region as _Region, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
@@ -337,6 +345,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async countryIsFrance(): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.countryIsFrance();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.countryIsFrance();
+            return result;
+        }
+    }
+    async countryIsSwitzerland(): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.countryIsSwitzerland();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.countryIsSwitzerland();
+            return result;
+        }
+    }
     async createListing(arg0: string, arg1: string, arg2: bigint, arg3: ProductCondition, arg4: Region, arg5: Array<string>, arg6: string, arg7: Array<ExternalBlob>): Promise<bigint> {
         if (this.processError) {
             try {
@@ -421,46 +457,60 @@ export class Backend implements backendInterface {
             return from_candid_vec_n27(this.uploadFile, this.downloadFile, result);
         }
     }
-    async getCallerUserProfile(): Promise<UserProfile | null> {
+    async getCallerCountry(): Promise<Country | null> {
         if (this.processError) {
             try {
-                const result = await this.actor.getCallerUserProfile();
+                const result = await this.actor.getCallerCountry();
                 return from_candid_opt_n32(this.uploadFile, this.downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getCallerUserProfile();
+            const result = await this.actor.getCallerCountry();
             return from_candid_opt_n32(this.uploadFile, this.downloadFile, result);
+        }
+    }
+    async getCallerUserProfile(): Promise<UserProfile | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCallerUserProfile();
+                return from_candid_opt_n35(this.uploadFile, this.downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCallerUserProfile();
+            return from_candid_opt_n35(this.uploadFile, this.downloadFile, result);
         }
     }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n40(this.uploadFile, this.downloadFile, result);
+                return from_candid_UserRole_n43(this.uploadFile, this.downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n40(this.uploadFile, this.downloadFile, result);
+            return from_candid_UserRole_n43(this.uploadFile, this.downloadFile, result);
         }
     }
     async getConversation(arg0: Principal): Promise<Conversation | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getConversation(arg0);
-                return from_candid_opt_n42(this.uploadFile, this.downloadFile, result);
+                return from_candid_opt_n45(this.uploadFile, this.downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getConversation(arg0);
-            return from_candid_opt_n42(this.uploadFile, this.downloadFile, result);
+            return from_candid_opt_n45(this.uploadFile, this.downloadFile, result);
         }
     }
     async getFavoritedListings(): Promise<Array<Listing>> {
@@ -582,28 +632,28 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserActivity(arg0);
-                return from_candid_record_n43(this.uploadFile, this.downloadFile, result);
+                return from_candid_record_n46(this.uploadFile, this.downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserActivity(arg0);
-            return from_candid_record_n43(this.uploadFile, this.downloadFile, result);
+            return from_candid_record_n46(this.uploadFile, this.downloadFile, result);
         }
     }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n32(this.uploadFile, this.downloadFile, result);
+                return from_candid_opt_n35(this.uploadFile, this.downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n32(this.uploadFile, this.downloadFile, result);
+            return from_candid_opt_n35(this.uploadFile, this.downloadFile, result);
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -637,14 +687,14 @@ export class Backend implements backendInterface {
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.saveCallerUserProfile(await to_candid_UserProfile_n44(this.uploadFile, this.downloadFile, arg0));
+                const result = await this.actor.saveCallerUserProfile(await to_candid_UserProfile_n47(this.uploadFile, this.downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.saveCallerUserProfile(await to_candid_UserProfile_n44(this.uploadFile, this.downloadFile, arg0));
+            const result = await this.actor.saveCallerUserProfile(await to_candid_UserProfile_n47(this.uploadFile, this.downloadFile, arg0));
             return result;
         }
     }
@@ -680,14 +730,17 @@ export class Backend implements backendInterface {
 function from_candid_Category_n30(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Category): Category {
     return from_candid_variant_n31(uploadFile, downloadFile, value);
 }
+function from_candid_Country_n33(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Country): Country {
+    return from_candid_variant_n34(uploadFile, downloadFile, value);
+}
 async function from_candid_ExternalBlob_n26(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ExternalBlob): Promise<ExternalBlob> {
     return await downloadFile(value);
 }
 async function from_candid_Listing_n19(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Listing): Promise<Listing> {
     return await from_candid_record_n20(uploadFile, downloadFile, value);
 }
-function from_candid_MotherhoodStatus_n36(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _MotherhoodStatus): MotherhoodStatus {
-    return from_candid_variant_n37(uploadFile, downloadFile, value);
+function from_candid_MotherhoodStatus_n39(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _MotherhoodStatus): MotherhoodStatus {
+    return from_candid_variant_n40(uploadFile, downloadFile, value);
 }
 function from_candid_Post_n28(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Post): Post {
     return from_candid_record_n29(uploadFile, downloadFile, value);
@@ -698,28 +751,31 @@ function from_candid_ProductCondition_n23(uploadFile: (file: ExternalBlob) => Pr
 function from_candid_Region_n21(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _Region): Region {
     return from_candid_variant_n22(uploadFile, downloadFile, value);
 }
-async function from_candid_UserProfile_n33(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserProfile): Promise<UserProfile> {
-    return await from_candid_record_n34(uploadFile, downloadFile, value);
+async function from_candid_UserProfile_n36(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserProfile): Promise<UserProfile> {
+    return await from_candid_record_n37(uploadFile, downloadFile, value);
 }
-function from_candid_UserRole_n40(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n41(uploadFile, downloadFile, value);
+function from_candid_UserRole_n43(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n44(uploadFile, downloadFile, value);
 }
 function from_candid__CaffeineStorageRefillResult_n4(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
     return from_candid_record_n5(uploadFile, downloadFile, value);
 }
-async function from_candid_opt_n32(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): Promise<UserProfile | null> {
-    return value.length === 0 ? null : await from_candid_UserProfile_n33(uploadFile, downloadFile, value[0]);
+function from_candid_opt_n32(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Country]): Country | null {
+    return value.length === 0 ? null : from_candid_Country_n33(uploadFile, downloadFile, value[0]);
 }
-function from_candid_opt_n35(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+async function from_candid_opt_n35(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): Promise<UserProfile | null> {
+    return value.length === 0 ? null : await from_candid_UserProfile_n36(uploadFile, downloadFile, value[0]);
+}
+function from_candid_opt_n38(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
     return value.length === 0 ? null : value[0];
 }
-async function from_candid_opt_n38(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ExternalBlob]): Promise<ExternalBlob | null> {
+async function from_candid_opt_n41(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ExternalBlob]): Promise<ExternalBlob | null> {
     return value.length === 0 ? null : await from_candid_ExternalBlob_n26(uploadFile, downloadFile, value[0]);
 }
-function from_candid_opt_n39(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Region]): Region | null {
+function from_candid_opt_n42(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Region]): Region | null {
     return value.length === 0 ? null : from_candid_Region_n21(uploadFile, downloadFile, value[0]);
 }
-function from_candid_opt_n42(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Conversation]): Conversation | null {
+function from_candid_opt_n45(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Conversation]): Conversation | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_opt_n6(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
@@ -791,9 +847,10 @@ function from_candid_record_n29(uploadFile: (file: ExternalBlob) => Promise<Uint
         category: from_candid_Category_n30(uploadFile, downloadFile, value.category)
     };
 }
-async function from_candid_record_n34(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function from_candid_record_n37(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     bio: [] | [string];
     status: _MotherhoodStatus;
+    country: [] | [_Country];
     favorites: Array<bigint>;
     name: string;
     profilePicture: [] | [_ExternalBlob];
@@ -801,21 +858,23 @@ async function from_candid_record_n34(uploadFile: (file: ExternalBlob) => Promis
 }): Promise<{
     bio?: string;
     status: MotherhoodStatus;
+    country?: Country;
     favorites: Array<bigint>;
     name: string;
     profilePicture?: ExternalBlob;
     location?: Region;
 }> {
     return {
-        bio: record_opt_to_undefined(from_candid_opt_n35(uploadFile, downloadFile, value.bio)),
-        status: from_candid_MotherhoodStatus_n36(uploadFile, downloadFile, value.status),
+        bio: record_opt_to_undefined(from_candid_opt_n38(uploadFile, downloadFile, value.bio)),
+        status: from_candid_MotherhoodStatus_n39(uploadFile, downloadFile, value.status),
+        country: record_opt_to_undefined(from_candid_opt_n32(uploadFile, downloadFile, value.country)),
         favorites: value.favorites,
         name: value.name,
-        profilePicture: record_opt_to_undefined(await from_candid_opt_n38(uploadFile, downloadFile, value.profilePicture)),
-        location: record_opt_to_undefined(from_candid_opt_n39(uploadFile, downloadFile, value.location))
+        profilePicture: record_opt_to_undefined(await from_candid_opt_n41(uploadFile, downloadFile, value.profilePicture)),
+        location: record_opt_to_undefined(from_candid_opt_n42(uploadFile, downloadFile, value.location))
     };
 }
-async function from_candid_record_n43(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function from_candid_record_n46(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     listings: Array<_Listing>;
     posts: Array<_Post>;
 }): Promise<{
@@ -878,7 +937,14 @@ function from_candid_variant_n31(uploadFile: (file: ExternalBlob) => Promise<Uin
 }): Category {
     return "postpartum" in value ? Category.postpartum : "sleep" in value ? Category.sleep : "mentalLoad" in value ? Category.mentalLoad : "organization" in value ? Category.organization : "pregnancy" in value ? Category.pregnancy : value;
 }
-function from_candid_variant_n37(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n34(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    france: null;
+} | {
+    switzerland: null;
+}): Country {
+    return "france" in value ? Country.france : "switzerland" in value ? Country.switzerland : value;
+}
+function from_candid_variant_n40(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     adultChildren: null;
 } | {
     postpartum: null;
@@ -893,7 +959,7 @@ function from_candid_variant_n37(uploadFile: (file: ExternalBlob) => Promise<Uin
 }): MotherhoodStatus {
     return "adultChildren" in value ? MotherhoodStatus.adultChildren : "postpartum" in value ? MotherhoodStatus.postpartum : "tryingToConceive" in value ? MotherhoodStatus.tryingToConceive : "youngChildren" in value ? MotherhoodStatus.youngChildren : "teenChildren" in value ? MotherhoodStatus.teenChildren : "pregnant" in value ? MotherhoodStatus.pregnant : value;
 }
-function from_candid_variant_n41(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n44(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -914,11 +980,14 @@ function from_candid_vec_n27(uploadFile: (file: ExternalBlob) => Promise<Uint8Ar
 function to_candid_Category_n16(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Category): _Category {
     return to_candid_variant_n17(uploadFile, downloadFile, value);
 }
+function to_candid_Country_n51(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Country): _Country {
+    return to_candid_variant_n52(uploadFile, downloadFile, value);
+}
 async function to_candid_ExternalBlob_n15(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
     return await uploadFile(value);
 }
-function to_candid_MotherhoodStatus_n46(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: MotherhoodStatus): _MotherhoodStatus {
-    return to_candid_variant_n47(uploadFile, downloadFile, value);
+function to_candid_MotherhoodStatus_n49(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: MotherhoodStatus): _MotherhoodStatus {
+    return to_candid_variant_n50(uploadFile, downloadFile, value);
 }
 function to_candid_ProductCondition_n10(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ProductCondition): _ProductCondition {
     return to_candid_variant_n11(uploadFile, downloadFile, value);
@@ -926,8 +995,8 @@ function to_candid_ProductCondition_n10(uploadFile: (file: ExternalBlob) => Prom
 function to_candid_Region_n12(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Region): _Region {
     return to_candid_variant_n13(uploadFile, downloadFile, value);
 }
-async function to_candid_UserProfile_n44(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): Promise<_UserProfile> {
-    return await to_candid_record_n45(uploadFile, downloadFile, value);
+async function to_candid_UserProfile_n47(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): Promise<_UserProfile> {
+    return await to_candid_record_n48(uploadFile, downloadFile, value);
 }
 function to_candid_UserRole_n8(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n9(uploadFile, downloadFile, value);
@@ -947,9 +1016,10 @@ function to_candid_record_n3(uploadFile: (file: ExternalBlob) => Promise<Uint8Ar
         proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
     };
 }
-async function to_candid_record_n45(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+async function to_candid_record_n48(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     bio?: string;
     status: MotherhoodStatus;
+    country?: Country;
     favorites: Array<bigint>;
     name: string;
     profilePicture?: ExternalBlob;
@@ -957,6 +1027,7 @@ async function to_candid_record_n45(uploadFile: (file: ExternalBlob) => Promise<
 }): Promise<{
     bio: [] | [string];
     status: _MotherhoodStatus;
+    country: [] | [_Country];
     favorites: Array<bigint>;
     name: string;
     profilePicture: [] | [_ExternalBlob];
@@ -964,7 +1035,8 @@ async function to_candid_record_n45(uploadFile: (file: ExternalBlob) => Promise<
 }> {
     return {
         bio: value.bio ? candid_some(value.bio) : candid_none(),
-        status: to_candid_MotherhoodStatus_n46(uploadFile, downloadFile, value.status),
+        status: to_candid_MotherhoodStatus_n49(uploadFile, downloadFile, value.status),
+        country: value.country ? candid_some(to_candid_Country_n51(uploadFile, downloadFile, value.country)) : candid_none(),
         favorites: value.favorites,
         name: value.name,
         profilePicture: value.profilePicture ? candid_some(await to_candid_ExternalBlob_n15(uploadFile, downloadFile, value.profilePicture)) : candid_none(),
@@ -1040,7 +1112,7 @@ function to_candid_variant_n17(uploadFile: (file: ExternalBlob) => Promise<Uint8
         pregnancy: null
     } : value;
 }
-function to_candid_variant_n47(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: MotherhoodStatus): {
+function to_candid_variant_n50(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: MotherhoodStatus): {
     adultChildren: null;
 } | {
     postpartum: null;
@@ -1065,6 +1137,17 @@ function to_candid_variant_n47(uploadFile: (file: ExternalBlob) => Promise<Uint8
         teenChildren: null
     } : value == MotherhoodStatus.pregnant ? {
         pregnant: null
+    } : value;
+}
+function to_candid_variant_n52(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Country): {
+    france: null;
+} | {
+    switzerland: null;
+} {
+    return value == Country.france ? {
+        france: null
+    } : value == Country.switzerland ? {
+        switzerland: null
     } : value;
 }
 function to_candid_variant_n9(uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {

@@ -5,6 +5,7 @@ import Text "mo:core/Text";
 import Array "mo:core/Array";
 import Bool "mo:core/Bool";
 import Time "mo:core/Time";
+import Option "mo:core/Option";
 import Runtime "mo:core/Runtime";
 import Iter "mo:core/Iter";
 import Order "mo:core/Order";
@@ -13,7 +14,9 @@ import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
+import Migration "migration";
 
+(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -50,6 +53,11 @@ actor {
     #youngChildren;
     #teenChildren;
     #adultChildren;
+  };
+
+  type Country = {
+    #switzerland;
+    #france;
   };
 
   public type Post = {
@@ -90,6 +98,7 @@ actor {
     status : MotherhoodStatus;
     bio : ?Text;
     favorites : [Nat];
+    country : ?Country;
     profilePicture : ?Storage.ExternalBlob;
   };
 
@@ -222,6 +231,30 @@ actor {
   ) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Non autorisé : seuls les utilisateurs peuvent créer des annonces");
+    };
+
+    // Check if user is from Switzerland - only Swiss users can create listings
+    switch (userProfiles.get(caller)) {
+      case (null) {
+        Runtime.trap("Profil utilisateur non trouvé");
+      };
+      case (?profile) {
+        switch (profile.country) {
+          case (null) {
+            Runtime.trap("Le pays doit être défini dans votre profil pour créer une annonce");
+          };
+          case (?country) {
+            switch (country) {
+              case (#france) {
+                Runtime.trap("La publication des annonces est disponible prochainement pour la France");
+              };
+              case (#switzerland) {
+                // Swiss users can proceed
+              };
+            };
+          };
+        };
+      };
     };
 
     if (images.size() == 0) {
@@ -372,6 +405,56 @@ actor {
       Runtime.trap("Non autorisé : seuls les utilisateurs peuvent enregistrer le profil");
     };
     userProfiles.add(caller, profile);
+  };
+
+  public query ({ caller }) func getCallerCountry() : async ?Country {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Non autorisé : seuls les utilisateurs peuvent accéder aux profils");
+    };
+    switch (userProfiles.get(caller)) {
+      case (null) { Runtime.trap("Profil utilisateur non trouvé") };
+      case (?profile) { profile.country };
+    };
+  };
+
+  public query ({ caller }) func countryIsFrance() : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Non autorisé : seuls les utilisateurs peuvent accéder aux profils");
+    };
+    switch (userProfiles.get(caller)) {
+      case (null) { Runtime.trap("Profil utilisateur non trouvé") };
+      case (?profile) {
+        switch (profile.country) {
+          case (null) { false };
+          case (?country) {
+            switch (country) {
+              case (#france) { true };
+              case (#switzerland) { false };
+            };
+          };
+        };
+      };
+    };
+  };
+
+  public query ({ caller }) func countryIsSwitzerland() : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Non autorisé : seuls les utilisateurs peuvent accéder aux profils");
+    };
+    switch (userProfiles.get(caller)) {
+      case (null) { Runtime.trap("Profil utilisateur non trouvé") };
+      case (?profile) {
+        switch (profile.country) {
+          case (null) { false };
+          case (?country) {
+            switch (country) {
+              case (#switzerland) { true };
+              case (#france) { false };
+            };
+          };
+        };
+      };
+    };
   };
 
   public shared ({ caller }) func sendMessage(receiver : Principal, content : Text) : async Nat {

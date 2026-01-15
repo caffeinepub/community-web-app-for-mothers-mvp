@@ -1,13 +1,15 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetAllListings, useGetFavoritedListings } from '../hooks/useQueries';
+import { useGetAllListings, useGetFavoritedListings, useGetCallerUserProfile } from '../hooks/useQueries';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ShoppingBag, Plus, Heart, Filter } from 'lucide-react';
 import CreateListingDialog from '../components/CreateListingDialog';
 import ListingCard from '../components/ListingCard';
+import { Country } from '../backend';
 import type { Principal } from '@icp-sdk/core/principal';
 
 interface SecondHandPageProps {
@@ -20,6 +22,7 @@ export default function SecondHandPage({ onViewProfile, initialCategoryFilter, o
   const { identity } = useInternetIdentity();
   const { data: listings = [], isLoading } = useGetAllListings();
   const { data: favoritedListings = [], isLoading: favoritesLoading } = useGetFavoritedListings();
+  const { data: userProfile } = useGetCallerUserProfile();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   
@@ -29,6 +32,10 @@ export default function SecondHandPage({ onViewProfile, initialCategoryFilter, o
   const [selectedRegion, setSelectedRegion] = useState<string>('all');
 
   const isAuthenticated = !!identity;
+  
+  // Check if user is from France
+  const isFrenchUser = userProfile?.country === Country.france;
+  const canCreateListing = isAuthenticated && !isFrenchUser;
 
   // Apply initial category filter when provided
   useEffect(() => {
@@ -75,6 +82,36 @@ export default function SecondHandPage({ onViewProfile, initialCategoryFilter, o
     setSelectedRegion('all');
   };
 
+  const CreateListingButton = () => {
+    const button = (
+      <Button 
+        onClick={() => canCreateListing && setShowCreateDialog(true)} 
+        disabled={!canCreateListing}
+        className="gap-2 bg-marketplace hover:bg-marketplace/90 disabled:opacity-50"
+      >
+        <Plus className="w-4 h-4" />
+        Partager un article
+      </Button>
+    );
+
+    if (isFrenchUser) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {button}
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p>La publication des annonces est disponible prochainement pour la France.</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return button;
+  };
+
   return (
     <div className="w-full py-8">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
@@ -84,14 +121,7 @@ export default function SecondHandPage({ onViewProfile, initialCategoryFilter, o
             <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">Échange entre mamans</h1>
             <p className="text-muted-foreground">Trouve ou partage des articles qui ont une histoire</p>
           </div>
-          <Button 
-            onClick={() => setShowCreateDialog(true)} 
-            disabled={!isAuthenticated}
-            className="gap-2 bg-marketplace hover:bg-marketplace/90"
-          >
-            <Plus className="w-4 h-4" />
-            Partager un article
-          </Button>
+          <CreateListingButton />
         </div>
 
         {!isAuthenticated && (
@@ -100,6 +130,17 @@ export default function SecondHandPage({ onViewProfile, initialCategoryFilter, o
               <CardTitle className="text-lg">Connecte-toi pour partager</CardTitle>
               <CardDescription>
                 Pour proposer des articles et sauvegarder tes favoris, il te suffit de te connecter.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+
+        {isFrenchUser && (
+          <Card className="mb-6 border-marketplace/20 bg-marketplace/5">
+            <CardHeader>
+              <CardTitle className="text-lg">Bientôt disponible</CardTitle>
+              <CardDescription>
+                La publication des annonces sera bientôt disponible pour la France. En attendant, tu peux parcourir les articles de la communauté !
               </CardDescription>
             </CardHeader>
           </Card>

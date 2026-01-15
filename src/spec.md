@@ -56,6 +56,9 @@ Une application communautaire web calme et simple pour les futures mères et les
   - Catégorie (sélection parmi : Vêtements, Chaussures, Jouets, Accessoires, Livres, Équipement bébé, Autres)
   - Âge (sélection parmi : 0–3 mois, 3–6 mois, 6–12 mois, 1–2 ans, 2–4 ans, 4+ ans)
   - Téléchargement d'images obligatoire (plusieurs images possibles)
+- **Contrôle d'accès par pays** :
+  - **Utilisateurs suisses (pays = Suisse)** : Peuvent voir et publier des annonces normalement
+  - **Utilisateurs français (pays = France)** : Peuvent voir les annonces et utiliser les filtres mais ne peuvent pas publier de nouvelles annonces - le bouton "Nouvelle annonce" est visible mais désactivé avec un message : "La publication des annonces est disponible prochainement pour la France."
 - Cartes d'annonces affichent le prénom ou surnom de l'auteur et le temps de publication relatif (ex: "Posté il y a 2 jours")
 - Système de favoris discret "Sauvegarder pour plus tard" :
   - Les utilisateurs peuvent marquer des annonces comme favorites via une icône cœur
@@ -85,6 +88,7 @@ Une application communautaire web calme et simple pour les futures mères et les
   - Photo de profil optionnelle (forme arrondie douce)
   - Prénom ou surnom
   - Localisation (canton)
+  - **Pays** (Suisse ou France)
   - Statut de maternité sélectionnable parmi : "Essais bébé", "Enceinte", "Postpartum", "Mère de jeune.s enfant.s", "Mère d'ado.s", "Mère d'adulte.s"
   - Bio courte optionnelle (1-2 lignes, ton amical)
 - Actions de profil privé (visibles uniquement sur son propre profil) :
@@ -95,7 +99,7 @@ Une application communautaire web calme et simple pour les futures mères et les
   - "Mes discussions" (messages du forum de l'utilisateur)
   - "Articles sauvegardés" (favoris, visible uniquement sur son propre profil)
 - Chaque section utilise des cartes minimalistes montrant titre, date et tags de statut basiques
-- Vue publique (autres utilisateurs) : affiche uniquement prénom/surnom, localisation, statut de maternité, et annonces/messages publics
+- Vue publique (autres utilisateurs) : affiche uniquement prénom/surnom, localisation, pays, statut de maternité, et annonces/messages publics
 - Vue privée (utilisateur voyant sa propre page) : inclut les actions personnelles et les favoris
 - Messages de confiance et sécurité rassurants :
   - "Ces informations sont visibles uniquement par les membres de la communauté"
@@ -103,7 +107,17 @@ Une application communautaire web calme et simple pour les futures mères et les
 - Bouton "Chat" pour initier une conversation privée (visible sur les profils des autres utilisateurs)
 - **Récupération automatique du profil utilisateur** : Au chargement de la page "Mon profil", l'application récupère automatiquement les données du profil de l'utilisateur connecté via `getCallerUserProfile()`
 - **Gestion des profils inexistants** : Si aucun profil utilisateur n'existe encore, afficher un message chaleureux et amical invitant l'utilisateur à compléter son profil (ex: "Complète ton profil pour le voir ici.") au lieu d'un message d'erreur
-- **Affichage correct des données** : Tous les champs du profil (nom, localisation, bio, statut, favoris, annonces, discussions) se remplissent correctement quand le profil existe
+- **Affichage correct des données** : Tous les champs du profil (nom, localisation, pays, bio, statut, favoris, annonces, discussions) se remplissent correctement quand le profil existe
+
+### Configuration de Profil Initial
+- **Dialogue de configuration de profil** lors de la première connexion incluant :
+  - Prénom ou surnom
+  - **Sélection du pays** via menu déroulant avec deux options : "Suisse" ou "France"
+  - Localisation (canton pour la Suisse, région pour la France)
+  - Statut de maternité
+  - Bio optionnelle
+- Style orange doux cohérent avec ton humain et supportant en français avec tutoiement
+- Champs obligatoires : prénom/surnom, pays, localisation, statut de maternité
 
 ### Chat Privé
 - Système de messagerie privée entre deux utilisateurs
@@ -144,6 +158,7 @@ Une application communautaire web calme et simple pour les futures mères et les
 - Profils utilisateurs étendus (liés à Internet Identity) avec :
   - Photo de profil optionnelle
   - Prénom ou surnom
+  - **Pays** (Suisse ou France)
   - Localisation (canton)
   - Statut de maternité
   - Bio courte optionnelle
@@ -157,10 +172,12 @@ Une application communautaire web calme et simple pour les futures mères et les
 
 ## Opérations Backend
 - Authentification des utilisateurs et gestion des sessions
-- Opérations CRUD pour les profils utilisateurs étendus (mise à jour photo, bio, statut de maternité, localisation)
+- Opérations CRUD pour les profils utilisateurs étendus (mise à jour photo, bio, statut de maternité, localisation, pays)
 - **Récupération du profil de l'utilisateur connecté** : Fonction `getCallerUserProfile()` qui retourne le profil de l'utilisateur authentifié ou indique qu'aucun profil n'existe
+- **Vérification du pays de l'utilisateur** : Fonction pour déterminer les permissions d'accès basées sur le pays de l'utilisateur
 - Opérations CRUD pour les messages du forum et les réponses
 - Opérations CRUD pour les annonces de seconde main avec nouveaux champs (catégorie, âge, images multiples)
+- **Contrôle d'accès pour la création d'annonces** : Vérification que seuls les utilisateurs suisses peuvent créer des annonces
 - Gestion des favoris (ajouter/supprimer des favoris par utilisateur)
 - Récupération des annonces favorites par utilisateur
 - Téléchargement et stockage d'images multiples pour les annonces et photos de profil
@@ -177,6 +194,6 @@ Une application communautaire web calme et simple pour les futures mères et les
 - Microtextes authentiques et non-marketing (ex: "Partage ton expérience" au lieu de "Publie ton message")
 - Contenu de la page d'accueil réécrit pour être plus chaleureux et spécifique aux mères, mettant l'accent sur la réassurance, l'appartenance et la maternité partagée
 - Messages d'erreur, étiquettes, boutons, formulaires, dialogues, et notifications système en français avec tutoiement et ton chaleureux
-- Toutes les fonctionnalités (chat, catégories, filtres d'âge, profils) entièrement en français avec tutoiement et langage supportant
+- Toutes les fonctionnalités (chat, catégories, filtres d'âge, profils, sélection de pays) entièrement en français avec tutoiement et langage supportant
 - Cohérence du ton humain et chaleureux dans tous les composants : HomePage.tsx, ForumPage.tsx, SecondHandPage.tsx, ProfilePage.tsx, ChatPage.tsx, et tous les composants sous frontend/src/components
 - Phrases simples et chaleureuses écrites en tutoiement, remplaçant les textes formels ou génériques

@@ -14,6 +14,12 @@ export class ExternalBlob {
     static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
     withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
+export interface Conversation {
+    id: bigint;
+    participant1: Principal;
+    participant2: Principal;
+    messages: Array<Message>;
+}
 export interface Reply {
     id: bigint;
     content: string;
@@ -51,15 +57,10 @@ export interface Message {
     timestamp: Time;
     receiver: Principal;
 }
-export interface Conversation {
-    id: bigint;
-    participant1: Principal;
-    participant2: Principal;
-    messages: Array<Message>;
-}
 export interface UserProfile {
     bio?: string;
     status: MotherhoodStatus;
+    country?: Country;
     favorites: Array<bigint>;
     name: string;
     profilePicture?: ExternalBlob;
@@ -71,6 +72,10 @@ export enum Category {
     mentalLoad = "mentalLoad",
     organization = "organization",
     pregnancy = "pregnancy"
+}
+export enum Country {
+    france = "france",
+    switzerland = "switzerland"
 }
 export enum MotherhoodStatus {
     adultChildren = "adultChildren",
@@ -101,12 +106,15 @@ export enum UserRole {
 }
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    countryIsFrance(): Promise<boolean>;
+    countryIsSwitzerland(): Promise<boolean>;
     createListing(title: string, description: string, price: bigint, condition: ProductCondition, region: Region, categories: Array<string>, ageGroup: string, images: Array<ExternalBlob>): Promise<bigint>;
     createPost(category: Category, content: string, isAnonymous: boolean): Promise<bigint>;
     createReply(postId: bigint, content: string, isAnonymous: boolean): Promise<bigint>;
     getAllConversations(): Promise<Array<Conversation>>;
     getAllListings(): Promise<Array<Listing>>;
     getAllPosts(): Promise<Array<Post>>;
+    getCallerCountry(): Promise<Country | null>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getConversation(participant: Principal): Promise<Conversation | null>;

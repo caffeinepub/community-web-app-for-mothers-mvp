@@ -6,10 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { MotherhoodStatus } from '../backend';
+import { MotherhoodStatus, Country } from '../backend';
 
 export default function ProfileSetupDialog() {
   const [name, setName] = useState('');
+  const [country, setCountry] = useState<Country>(Country.switzerland);
   const [status, setStatus] = useState<MotherhoodStatus>(MotherhoodStatus.tryingToConceive);
   const saveProfile = useSaveCallerUserProfile();
 
@@ -25,6 +26,7 @@ export default function ProfileSetupDialog() {
       await saveProfile.mutateAsync({ 
         name: name.trim(), 
         status,
+        country,
         favorites: [] 
       });
       toast.success('Bienvenue sur Nara !');
@@ -39,7 +41,7 @@ export default function ProfileSetupDialog() {
         <DialogHeader>
           <DialogTitle>Bienvenue sur Nara</DialogTitle>
           <DialogDescription>
-            Merci de nous indiquer ton nom et où tu en es dans ton parcours. Tu pourras choisir de publier anonymement plus tard.
+            Merci de nous indiquer ton nom, ton pays et où tu en es dans ton parcours. Tu pourras choisir de publier anonymement plus tard.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -52,6 +54,18 @@ export default function ProfileSetupDialog() {
               onChange={(e) => setName(e.target.value)}
               autoFocus
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="country">Ton Pays</Label>
+            <Select value={country} onValueChange={(value) => setCountry(value as Country)}>
+              <SelectTrigger id="country">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="switzerland">Suisse</SelectItem>
+                <SelectItem value="france">France</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="status">Où en es-tu dans ton parcours ?</Label>
