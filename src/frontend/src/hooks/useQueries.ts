@@ -1,8 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import { Category, ProductCondition, Region, type Post, type Reply, type Listing, type UserProfile, type Conversation, type Message } from '../backend';
+import { Category, ProductCondition, Region, AdminReportType, type Post, type Reply, type Listing, type UserProfile, type Conversation, type Message, type AdminReportedContent, type AdminActivityEntry, type AdminStats, type AdminModerationItem } from '../backend';
 import { ExternalBlob } from '../backend';
 import type { Principal } from '@icp-sdk/core/principal';
+
+// Helper to detect authorization errors
+function isAuthError(error: any): boolean {
+  const message = error?.message || '';
+  return message.includes('Non autorisé') || 
+         message.includes('seuls les utilisateurs') || 
+         message.includes('seuls les membres') ||
+         message.includes('seuls les administrateurs');
+}
 
 // User Profile Queries
 export function useGetCallerUserProfile() {
@@ -11,8 +20,15 @@ export function useGetCallerUserProfile() {
   const query = useQuery<UserProfile | null>({
     queryKey: ['currentUserProfile'],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.getCallerUserProfile();
+      if (!actor) return null;
+      try {
+        return await actor.getCallerUserProfile();
+      } catch (error) {
+        if (isAuthError(error)) {
+          return null;
+        }
+        throw error;
+      }
     },
     enabled: !!actor && !actorFetching,
     retry: false,
@@ -32,9 +48,31 @@ export function useGetUserProfile(userPrincipal: Principal | null) {
     queryKey: ['userProfile', userPrincipal?.toString()],
     queryFn: async () => {
       if (!actor || !userPrincipal) return null;
-      return actor.getUserProfile(userPrincipal);
+      try {
+        return await actor.getUserProfile(userPrincipal);
+      } catch (error) {
+        if (isAuthError(error)) {
+          return null;
+        }
+        throw error;
+      }
     },
     enabled: !!actor && !isFetching && !!userPrincipal,
+    retry: false,
+  });
+}
+
+export function useGetCurrentPrincipalId() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<string>({
+    queryKey: ['currentPrincipalId'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.getCurrentPrincipalId();
+    },
+    enabled: !!actor && !isFetching,
+    retry: false,
   });
 }
 
@@ -55,7 +93,7 @@ export function useSaveCallerUserProfile() {
   });
 }
 
-// Forum Queries
+// Forum Queries - using public endpoints
 export function useGetAllPosts() {
   const { actor, isFetching } = useActor();
 
@@ -63,9 +101,15 @@ export function useGetAllPosts() {
     queryKey: ['posts'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getAllPosts();
+      try {
+        return await actor.getPublicAllPosts();
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+        return [];
+      }
     },
     enabled: !!actor && !isFetching,
+    retry: 1,
   });
 }
 
@@ -76,9 +120,15 @@ export function useGetPostsByCategory(category: Category) {
     queryKey: ['posts', category],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getPostsByCategory(category);
+      try {
+        return await actor.getPublicPostsByCategory(category);
+      } catch (error) {
+        console.error('Error fetching posts by category:', error);
+        return [];
+      }
     },
     enabled: !!actor && !isFetching,
+    retry: 1,
   });
 }
 
@@ -89,9 +139,15 @@ export function useGetPost(postId: bigint | null) {
     queryKey: ['post', postId?.toString()],
     queryFn: async () => {
       if (!actor || postId === null) return null;
-      return actor.getPost(postId);
+      try {
+        return await actor.getPublicPost(postId);
+      } catch (error) {
+        console.error('Error fetching post:', error);
+        return null;
+      }
     },
     enabled: !!actor && !isFetching && postId !== null,
+    retry: 1,
   });
 }
 
@@ -119,9 +175,15 @@ export function useGetRepliesByPost(postId: bigint | null) {
     queryKey: ['replies', postId?.toString()],
     queryFn: async () => {
       if (!actor || postId === null) return [];
-      return actor.getRepliesByPost(postId);
+      try {
+        return await actor.getRepliesByPost(postId);
+      } catch (error) {
+        console.error('Error fetching replies:', error);
+        return [];
+      }
     },
     enabled: !!actor && !isFetching && postId !== null,
+    retry: 1,
   });
 }
 
@@ -140,7 +202,24 @@ export function useCreateReply() {
   });
 }
 
-// Listing Queries
+export function useReportContent() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ contentType, contentId }: { contentType: 'post' | 'comment'; contentId: bigint }) => {
+      if (!actor) throw new Error('Actor not available');
+      const reportType = contentType === 'post' ? AdminReportType.post : AdminReportType.comment;
+      return actor.reportContent(reportType, contentId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminReportedContent'] });
+      queryClient.invalidateQueries({ queryKey: ['adminModeration'] });
+    },
+  });
+}
+
+// Listing Queries - using public endpoints
 export function useGetAllListings() {
   const { actor, isFetching } = useActor();
 
@@ -148,9 +227,15 @@ export function useGetAllListings() {
     queryKey: ['listings'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getAllListings();
+      try {
+        return await actor.getPublicAllListings();
+      } catch (error) {
+        console.error('Error fetching listings:', error);
+        return [];
+      }
     },
     enabled: !!actor && !isFetching,
+    retry: 1,
   });
 }
 
@@ -161,9 +246,18 @@ export function useGetFavoritedListings() {
     queryKey: ['favoritedListings'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getFavoritedListings();
+      try {
+        return await actor.getFavoritedListings();
+      } catch (error) {
+        if (isAuthError(error)) {
+          return [];
+        }
+        console.error('Error fetching favorited listings:', error);
+        return [];
+      }
     },
     enabled: !!actor && !isFetching,
+    retry: false,
   });
 }
 
@@ -174,9 +268,17 @@ export function useIsFavorite(listingId: bigint) {
     queryKey: ['isFavorite', listingId.toString()],
     queryFn: async () => {
       if (!actor) return false;
-      return actor.isFavorite(listingId);
+      try {
+        return await actor.isFavorite(listingId);
+      } catch (error) {
+        if (isAuthError(error)) {
+          return false;
+        }
+        return false;
+      }
     },
     enabled: !!actor && !isFetching,
+    retry: false,
   });
 }
 
@@ -238,10 +340,18 @@ export function useGetConversation(participant: Principal | null) {
     queryKey: ['conversation', participant?.toString()],
     queryFn: async () => {
       if (!actor || !participant) return null;
-      return actor.getConversation(participant);
+      try {
+        return await actor.getConversation(participant);
+      } catch (error) {
+        if (isAuthError(error)) {
+          return null;
+        }
+        throw error;
+      }
     },
     enabled: !!actor && !isFetching && !!participant,
-    refetchInterval: 3000, // Poll every 3 seconds for new messages
+    refetchInterval: 3000,
+    retry: false,
   });
 }
 
@@ -252,9 +362,17 @@ export function useGetAllConversations() {
     queryKey: ['conversations'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getAllConversations();
+      try {
+        return await actor.getAllConversations();
+      } catch (error) {
+        if (isAuthError(error)) {
+          return [];
+        }
+        return [];
+      }
     },
     enabled: !!actor && !isFetching,
+    retry: false,
   });
 }
 
@@ -270,6 +388,175 @@ export function useSendMessage() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['conversation', variables.receiver.toString()] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+// Admin Queries
+export function useIsAdmin() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<boolean>({
+    queryKey: ['isAdmin'],
+    queryFn: async () => {
+      if (!actor) return false;
+      try {
+        return await actor.isAdmin();
+      } catch (error) {
+        return false;
+      }
+    },
+    enabled: !!actor && !isFetching,
+    retry: false,
+  });
+}
+
+export function useAdminGetAllContentForModeration() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<AdminModerationItem[]>({
+    queryKey: ['adminModeration'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return await actor.adminGetAllContentForModeration();
+    },
+    enabled: !!actor && !isFetching,
+    retry: false,
+  });
+}
+
+export function useAdminGetPostDetails(postId: bigint | null) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<Post | null>({
+    queryKey: ['adminPostDetails', postId?.toString()],
+    queryFn: async () => {
+      if (!actor || postId === null) return null;
+      try {
+        return await actor.getPublicPost(postId);
+      } catch (error) {
+        console.error('Error fetching post details:', error);
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching && postId !== null,
+    retry: false,
+  });
+}
+
+export function useAdminGetListingDetails(listingId: bigint | null) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<Listing | null>({
+    queryKey: ['adminListingDetails', listingId?.toString()],
+    queryFn: async () => {
+      if (!actor || listingId === null) return null;
+      try {
+        return await actor.getPublicListing(listingId);
+      } catch (error) {
+        console.error('Error fetching listing details:', error);
+        return null;
+      }
+    },
+    enabled: !!actor && !isFetching && listingId !== null,
+    retry: false,
+  });
+}
+
+export function useAdminGetReportedContent() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<AdminReportedContent[]>({
+    queryKey: ['adminReportedContent'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return await actor.adminGetReportedContent();
+    },
+    enabled: !!actor && !isFetching,
+    retry: false,
+  });
+}
+
+export function useAdminGetRecentActivity() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<AdminActivityEntry[]>({
+    queryKey: ['adminRecentActivity'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return await actor.adminGetRecentActivity();
+    },
+    enabled: !!actor && !isFetching,
+    retry: false,
+  });
+}
+
+export function useAdminGetStats() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<AdminStats>({
+    queryKey: ['adminStats'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      return await actor.adminGetStats();
+    },
+    enabled: !!actor && !isFetching,
+    retry: false,
+  });
+}
+
+// Note: Backend doesn't have hide/delete methods, using report as moderation action
+export function useAdminHidePost() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (postId: bigint) => {
+      if (!actor) throw new Error('Actor not available');
+      // Backend doesn't have hide method, report instead
+      return actor.reportContent(AdminReportType.post, postId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminModeration'] });
+      queryClient.invalidateQueries({ queryKey: ['adminStats'] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['adminPostDetails'] });
+    },
+  });
+}
+
+export function useAdminDeletePost() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (postId: bigint) => {
+      if (!actor) throw new Error('Actor not available');
+      // Backend doesn't have delete method, report instead
+      return actor.reportContent(AdminReportType.post, postId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminModeration'] });
+      queryClient.invalidateQueries({ queryKey: ['adminStats'] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+  });
+}
+
+export function useAdminDeleteListing() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (listingId: bigint) => {
+      if (!actor) throw new Error('Actor not available');
+      // Backend doesn't have delete method for listings
+      throw new Error('Delete listing not implemented in backend');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminModeration'] });
+      queryClient.invalidateQueries({ queryKey: ['adminStats'] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
     },
   });
 }

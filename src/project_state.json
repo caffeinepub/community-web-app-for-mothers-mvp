@@ -1,0 +1,289 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Nara is an ICP (Internet Computer) community web app for mothers (French UI) combining: (1) a forum with posts/replies (optionally anonymous), (2) a “Seconde Main” marketplace for sharing second-hand baby/kids items with photos and favorites, (3) private 1:1 messaging, (4) member profiles (setup + edit, with country/region and motherhood status), (5) GDPR-style participation gating (rules acceptance + email required before posting/replying/listing/messaging), and (6) an admin dashboard for moderation, activity feed, and community statistics. The backend is a Motoko canister with access control (first valid token user becomes admin) and blob-storage integration for image uploads.",
+  "existing_features": [
+    {
+      "id": "IF-1",
+      "title": "Internet Identity authentication (login/logout)",
+      "synonyms": [
+        "II login",
+        "DFINITY auth",
+        "InternetIdentityProvider"
+      ],
+      "description": "Users authenticate via Internet Identity using @dfinity/auth-client. The app persists and reloads delegation identities, supports logout, and exposes auth status flags for UI state (initializing/logging-in/etc.).",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-2",
+      "title": "Backend actor creation per identity with cache refresh",
+      "synonyms": [
+        "useActor",
+        "actor lifecycle"
+      ],
+      "description": "Frontend creates an anonymous or authenticated backend actor depending on identity, initializes access control with a secret token for role assignment, and invalidates/refetches React Query caches when the actor changes.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-3",
+      "title": "Role-based access control with admin bootstrap token",
+      "synonyms": [
+        "AccessControl",
+        "admin token bootstrap",
+        "user roles"
+      ],
+      "description": "Motoko backend assigns roles (guest/user/admin). The first authenticated caller who provides the correct secret (matching the CAFFEINE_ADMIN_TOKEN env var) becomes admin; others become users. Admin-only endpoints are enforced server-side.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-4",
+      "title": "User profile setup and persistence",
+      "synonyms": [
+        "ProfileSetupDialog",
+        "onboarding profile"
+      ],
+      "description": "Authenticated users must create a profile with name, country (France/Switzerland), region (dynamic options), and motherhood status. Profile data is saved to the backend and used throughout the app.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-5",
+      "title": "Edit profile (bio, email, marketing opt-in, avatar upload)",
+      "synonyms": [
+        "EditProfileDialog",
+        "profile editor"
+      ],
+      "description": "Users can update profile fields including bio and email, toggle marketing opt-in, and upload/remove a profile picture with validation (type/size) and upload progress via ExternalBlob.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-6",
+      "title": "GDPR / community rules compliance gate",
+      "synonyms": [
+        "RulesAcceptanceDialog",
+        "useGDPRCompliance"
+      ],
+      "description": "Before creating posts/replies/listings or sending messages, the client checks if the user accepted rules and provided an email; otherwise it shows a rules/email dialog, updates the user profile, and then executes the pending action. The backend enforces the same constraints via traps.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-7",
+      "title": "Forum: browse posts and filter by category",
+      "synonyms": [
+        "ForumPage",
+        "getAllPosts",
+        "getPostsByCategory"
+      ],
+      "description": "Members can view a feed of forum posts, filter by defined categories (grossesse, post-partum, sommeil, organisation, charge mentale), and open a post detail dialog.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-8",
+      "title": "Forum: create posts with optional anonymity",
+      "synonyms": [
+        "CreatePostDialog",
+        "anonymous posting"
+      ],
+      "description": "Authenticated members can create forum posts, choose a category, and optionally post anonymously (author displayed as “Anonyme”). Activity is logged for admin analytics.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-9",
+      "title": "Forum: post detail view and replies (optional anonymity)",
+      "synonyms": [
+        "PostDetailDialog",
+        "comments",
+        "createReply"
+      ],
+      "description": "Members can open a post, view replies, and add replies with optional anonymity. Replies are sorted for conversation flow. Hidden content is restricted to admins by backend checks.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-10",
+      "title": "Content reporting (posts/comments) API integration",
+      "synonyms": [
+        "reportContent",
+        "moderation reports"
+      ],
+      "description": "Backend supports reporting forum posts and comments with duplicate-report prevention per user/content. Frontend exposes a React Query mutation hook and invalidates admin moderation/reported content caches on success.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-11",
+      "title": "Second-hand marketplace: browse listings with filters",
+      "synonyms": [
+        "SecondHandPage",
+        "listings feed"
+      ],
+      "description": "Members can browse second-hand listings with sorting by recency and client-side filters for category, age group, and region (supports Region union types). Listings display image carousels, condition, location, and metadata.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-12",
+      "title": "Second-hand marketplace: create listing with photo uploads (Switzerland only)",
+      "synonyms": [
+        "CreateListingDialog",
+        "createListing"
+      ],
+      "description": "Users can create a listing with title, description, CHF price (stored in cents), condition, Swiss canton region, multiple categories, age group, and 1–5 images uploaded via ExternalBlob. Backend blocks listing creation for France accounts.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-13",
+      "title": "Favorites: save/unsave listings and view favorites lists",
+      "synonyms": [
+        "toggleFavorite",
+        "favoritedListings"
+      ],
+      "description": "Users can toggle listing favorites (stored in UserProfile.favorites), query favorite status per listing, and browse favorited listings in both the marketplace Favorites tab and the profile page Favorites tab.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-14",
+      "title": "User profiles: view own/other profiles and activity tabs",
+      "synonyms": [
+        "ProfilePage",
+        "getUserActivity"
+      ],
+      "description": "Users can view their own or another member’s profile (name, country/region, motherhood status, bio, avatar). Activity tabs show the user’s listings and forum posts; own profile also shows favorites and principal ID.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-15",
+      "title": "Private messaging: conversations and 1:1 chat",
+      "synonyms": [
+        "ChatPage",
+        "sendMessage",
+        "getConversation"
+      ],
+      "description": "Authenticated members can send messages to another principal, view a conversation (polled every 3 seconds), and list all their conversations. Messaging is gated by GDPR compliance checks and backend validation.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-16",
+      "title": "Admin dashboard: moderation queue, content detail, actions",
+      "synonyms": [
+        "AdminDashboardPage",
+        "admin moderation"
+      ],
+      "description": "Admins can access an admin-only dashboard to review moderation items, open full details for posts/listings, hide posts, delete posts, and delete listings. Access is enforced via role checks and the UI redirects on unauthorized access.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-17",
+      "title": "Admin dashboard: reported content, recent activity feed, and stats",
+      "synonyms": [
+        "admin analytics",
+        "adminGetStats",
+        "activity log"
+      ],
+      "description": "Backend maintains an activity log (registrations, forum posts, comments, listings) and provides admin stats (user counts, content metrics, country distribution) plus reported content retrieval. Frontend displays these in separate dashboard sections.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-18",
+      "title": "Blob storage maintenance endpoints (gateway auth, GC, cycles refill)",
+      "synonyms": [
+        "caffeine storage mixin",
+        "dead blob pruning"
+      ],
+      "description": "Backend includes a blob-storage mixin to manage storage gateway principals, query live/dead blobs, confirm deletions (triggering GC), and allow a designated cashier principal to top up cycles.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "feature-rebuild-and-redeploy-the-most-recent-stable-version-of-the-app-so-the-published-url-loads-successfully-again",
+      "title": "Rebuild and redeploy the most recent stable version of the app so the published URL loads successfully again.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-unauthenticated-browsing-resilient-when-backend-calls-fail-due-to-authorization-e-g-getallposts-getalllistings-getpost-getrepliesbypost-the-frontend-must-render-a-readable-logged-out-state-with-a-clear-call-to-action-to-log-in-instead-of-failing-to-render-or-blocking-the-entire-app",
+      "title": "Make unauthenticated browsing resilient: when backend calls fail due to authorization (e.g., getAllPosts/getAllListings/getPost/getRepliesByPost), the frontend must render a readable logged-out state with a clear call-to-action to log in, instead of failing to render or blocking the entire app.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Admin dashboard: make moderation actions functional (Hide/Delete/Mark OK/Leave visible) with backend support (dismiss/clear reports) and admin-only access enforcement",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Forum upgrades: add category tag \"Autres\", @mentions in replies, simple threaded replies, author edit/delete post, report button (warning triangle), admin manual deletion, keyword search filter, and notifications for replies/mentions",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Home page becomes a conversation-based feed (continuous scroll, full posts by default, tags, actions Reply/Save/Report) instead of a traditional forum feel",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Messaging: add notifications for new messages and show an empty-state message when user has no conversations yet (e.g., \"Tu n’as pas encore contacté de vendeuse…\")",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Update backend read APIs to support read-only access for unauthenticated callers OR introduce dedicated read-only query endpoints that do not require the #user permission for browsing public content (posts/listings and their details), while keeping write actions (create post/reply/listing, messaging, reporting, favorites) restricted to authenticated community users.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    }
+  ],
+  "architectural_notes": [
+    "Frontend is React + TypeScript with @tanstack/react-query for all remote state (queries/mutations) and cache invalidation.",
+    "Authentication uses Internet Identity via @dfinity/auth-client; identity is provided via a React Context provider.",
+    "Backend access is through an “actor” abstraction created per identity (useActor), with automatic refetch/invalidation of all queries when the actor changes.",
+    "Backend is a single Motoko actor using in-memory Map-based storage (user profiles, posts, replies, listings, conversations, reports, activity log) and simple Nat counters for IDs.",
+    "Authorization is implemented via an AccessControl module (roles: admin/user/guest) and a MixinAuthorization initializer using an env var admin token; client passes a secret from URL hash to attempt admin assignment.",
+    "GDPR compliance is enforced both client-side (useGDPRCompliance gates actions) and server-side (verifyGDPRCompliance traps if rules/email missing).",
+    "Images are handled via an ExternalBlob abstraction and backend blob-storage mixin (gateway principals, dead blob pruning, cashier refill cycles).",
+    "UI is styled with TailwindCSS + shadcn/ui components; warm “marketplace” theme tokens and DM Serif Display heading font are configured globally.",
+    "Navigation is primarily tab-based in the SPA (Accueil/Forum/Seconde Main/Profil/Chat) with a special admin route (/admin or #admin)."
+  ],
+  "known_issues": [
+    "Anonymous (guest) users are blocked from reading most content server-side (getAllPosts/getAllListings require #user). The UI suggests read-only browsing when not logged in, which likely results in query errors unless handled elsewhere.",
+    "Report counting logic is incorrect in several admin endpoints: reportCounts uses Map.add(key, 1) without incrementing, so multiple reports won’t accumulate correctly (adminGetReportedContent/adminGetStats).",
+    "Admin moderation “OK” action is a UI-only no-op; there is no backend operation to dismiss items or clear reports from the queue.",
+    "Marketplace “contact seller” from listing cards/details is not implemented: frontend shows an error because backend listings only store author name (Text) and not seller Principal, so sendMessage can’t be targeted from listings.",
+    "User activity aggregation (getUserActivity) matches posts/listings by author name text; if a user changes their display name, historical content attribution/activity queries may break.",
+    "Listing type includes a favorites:[Principal] field but favorites are actually tracked in UserProfile.favorites; the listing-level favorites field appears unused/inconsistent.",
+    "Conversation lookup in sendMessage/getConversation scans all conversations (O(n)); may become slow as data grows.",
+    "Admin can hide posts but there is no implemented hide/delete flow for replies/comments (despite comment reporting being supported).",
+    "Image upload progress in CreateListingDialog is a single scalar updated per image loop; progress reporting may be inaccurate for multiple images.",
+    "Profile picture upload can fail with generic error \"échec de la mise à jour du profil\" even when required fields are filled."
+  ],
+  "isFixRequest": true,
+  "gameProjectType": "none",
+  "projectName": "Nara",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

@@ -59,21 +59,33 @@ export default function ListingCard({ listing, onViewProfile }: ListingCardProps
   };
 
   const getRegionLabel = (region: Region) => {
-    switch (region) {
-      case Region.geneva:
-        return 'Genève';
-      case Region.vaud:
-        return 'Vaud';
-      case Region.valais:
-        return 'Valais';
-      case Region.fribourg:
-        return 'Fribourg';
-      case Region.neuchatel:
-        return 'Neuchâtel';
-      case Region.jura:
-        return 'Jura';
-      default:
-        return 'Genève';
+    if (region.__kind__ === 'swissCanton') {
+      switch (region.swissCanton) {
+        case 'geneva': return 'Genève';
+        case 'vaud': return 'Vaud';
+        case 'valais': return 'Valais';
+        case 'fribourg': return 'Fribourg';
+        case 'neuchatel': return 'Neuchâtel';
+        case 'jura': return 'Jura';
+        default: return 'Genève';
+      }
+    } else {
+      switch (region.frenchRegion) {
+        case 'auvergneRhoneAlpes': return 'Auvergne-Rhône-Alpes';
+        case 'bourgogneFrancheComte': return 'Bourgogne-Franche-Comté';
+        case 'bretagne': return 'Bretagne';
+        case 'centreValDeLoire': return 'Centre-Val de Loire';
+        case 'corse': return 'Corse';
+        case 'grandEst': return 'Grand Est';
+        case 'hautsDeFrance': return 'Hauts-de-France';
+        case 'ileDeFrance': return 'Ile-de-France';
+        case 'normandie': return 'Normandie';
+        case 'nouvelleAquitaine': return 'Nouvelle-Aquitaine';
+        case 'occitanie': return 'Occitanie';
+        case 'paysDeLaLoire': return 'Pays de la Loire';
+        case 'provenceAlpesCoteAzur': return 'Provence-Alpes-Côte d\'Azur';
+        default: return '';
+      }
     }
   };
 

@@ -1,0 +1,75 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-04T18:39:31.212Z",
+  "summary": "Diff adds frontend resiliency for logged-out/authorization failures (logged-out CTA card, query fallbacks, admin page guard) and introduces public-read query usage on the frontend. However, the diff does not provide clear evidence that the backend added/updated the required public read endpoints, and it includes several unrelated UI/branding and behavior changes not requested.",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "Rebuild and redeploy the most recent stable version of the app so the published URL loads successfully again.",
+      "reason": "The diff only shows code changes; it contains no evidence of a rebuild/redeploy or any deployment configuration changes that would restore the published URL.",
+      "evidence": [
+        "<file-diff> summary only includes source file changes; no deployment artifacts/config shown"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Update backend read APIs to support read-only access for unauthenticated callers OR introduce dedicated read-only query endpoints for browsing public content, while keeping write actions restricted.",
+      "reason": "Frontend hooks were switched to call public endpoints (e.g., getPublicAllPosts/getPublicPostsByCategory), but the backend/main.mo diff is truncated and does not show the addition/relaxation of backend authorization for read APIs or the implementation of these public endpoints. Based on provided evidence, backend support for unauthenticated read access is not confirmed.",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts (calls actor.getPublicAllPosts, actor.getPublicPostsByCategory, etc.)",
+        "backend/main.mo (truncated; no shown public read endpoints)"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Global UI/branding changes (French navigation labels, DM Serif Display font usage, footer text styling, global color palette updates).",
+      "reason": "Not requested by any requirement; scope was availability/loading/auth resilience, not a visual redesign.",
+      "evidence": [
+        "frontend-file-summaries.txt (Header/Footer/index.css/tailwind.config.js descriptions)"
+      ]
+    },
+    {
+      "description": "Home page and other content microcopy/feature-section/icon changes (e.g., switching category card icons to Sparkles, warm conversational copy updates).",
+      "reason": "Not requested; these are content/design changes unrelated to fixing auth-loading failures.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/pages/HomePage.tsx, ForumPage.tsx summaries)"
+      ]
+    },
+    {
+      "description": "Second-hand page behavior change: disabling listing creation for French users.",
+      "reason": "Not requested and appears to change application behavior beyond the stated non-goals.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/pages/SecondHandPage.tsx summary: \"access control logic that disables listing creation for French users\")"
+      ]
+    },
+    {
+      "description": "Profile setup dialog changes adding defaults for rulesAccepted/marketingOptIn, posts/listings arrays, and registrationTime initialization.",
+      "reason": "Not requested as part of availability/auth-resilience fix; this modifies profile persistence semantics.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/components/ProfileSetupDialog.tsx summary)"
+      ]
+    },
+    {
+      "description": "Adding a generic AppErrorBoundary component with reload UI.",
+      "reason": "Not explicitly requested by REQ-1/REQ-2; while it may help robustness, it is additional functionality beyond specified acceptance criteria.",
+      "evidence": [
+        "frontend/src/components/AppErrorBoundary.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.62,
+  "changed_files": [
+    "backend/main.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/App.tsx",
+    "frontend/src/components/AppErrorBoundary.tsx",
+    "frontend/src/components/LoggedOutStateCard.tsx",
+    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/AdminDashboardPage.tsx",
+    "frontend/src/pages/ChatPage.tsx",
+    "project_state.json"
+  ]
+}

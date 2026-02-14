@@ -64,9 +64,14 @@ export default function SecondHandPage({ onViewProfile, initialCategoryFilter, o
     }
 
     if (selectedRegion !== 'all') {
-      filtered = filtered.filter(listing => 
-        listing.region === selectedRegion
-      );
+      filtered = filtered.filter(listing => {
+        // Handle both Swiss cantons and French regions
+        if (listing.region.__kind__ === 'swissCanton') {
+          return listing.region.swissCanton === selectedRegion;
+        } else {
+          return listing.region.frenchRegion === selectedRegion;
+        }
+      });
     }
 
     return filtered.sort((a, b) => Number(b.timestamp - a.timestamp));

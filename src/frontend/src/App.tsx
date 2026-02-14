@@ -10,6 +10,7 @@ import ForumPage from './pages/ForumPage';
 import SecondHandPage from './pages/SecondHandPage';
 import ProfilePage from './pages/ProfilePage';
 import ChatPage from './pages/ChatPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import ProfileSetupDialog from './components/ProfileSetupDialog';
 import { Heart } from 'lucide-react';
 import type { Principal } from '@icp-sdk/core/principal';
@@ -24,6 +25,9 @@ export default function App() {
 
   const isAuthenticated = !!identity;
   const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
+
+  // Check if current path is admin dashboard
+  const isAdminPath = window.location.pathname === '/admin' || window.location.hash === '#admin';
 
   const handleViewProfile = (principal: Principal) => {
     setSelectedUserPrincipal(principal);
@@ -50,14 +54,24 @@ export default function App() {
     setActiveTab('secondhand');
   };
 
-  // Show loading state while checking authentication
-  if (profileLoading && !isFetched) {
+  // Show minimal loading state only when actor is initializing
+  if (profileLoading && !isFetched && isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <Heart className="w-12 h-12 mx-auto text-primary animate-pulse" />
           <p className="text-muted-foreground">Chargement...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Render admin dashboard if on admin path
+  if (isAdminPath) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <AdminDashboardPage />
+        <Toaster />
       </div>
     );
   }

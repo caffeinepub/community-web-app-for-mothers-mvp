@@ -1,0 +1,75 @@
+{
+  "kind": "build_request",
+  "title": "Restore app availability and fix loading failures after redeploy",
+  "priority": "high",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Rebuild and redeploy the most recent stable version of the app so the published URL loads successfully again.",
+      "target": "unknown",
+      "source": {
+        "messageIds": [
+          "msg-11",
+          "msg-12"
+        ],
+        "quotes": [
+          "mon app ne charge pas",
+          "oui"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The published app loads to the main UI without showing a blank screen or getting stuck on an infinite loading state.",
+        "No uncaught exceptions appear in the browser console during initial load."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Make unauthenticated browsing resilient: when backend calls fail due to authorization (e.g., getAllPosts/getAllListings/getPost/getRepliesByPost), the frontend must render a readable logged-out state with a clear call-to-action to log in, instead of failing to render or blocking the entire app.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-11"
+        ],
+        "quotes": [
+          "mon app ne charge pas"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When the user is logged out, the Home/Forum/Second-hand pages render a usable read-only UI (or a login-gated UI) without crashing.",
+        "If a query returns an authorization error, the UI shows a non-technical message explaining login is required and provides a login button or directs the user to the existing login control.",
+        "Admin route (/admin) does not crash for logged-out users; it shows an access/login prompt rather than a blank screen."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Update backend read APIs to support read-only access for unauthenticated callers OR introduce dedicated read-only query endpoints that do not require the #user permission for browsing public content (posts/listings and their details), while keeping write actions (create post/reply/listing, messaging, reporting, favorites) restricted to authenticated community users.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-11"
+        ],
+        "quotes": [
+          "mon app ne charge pas"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A logged-out user can load and view the posts feed and listings feed without triggering a backend authorization trap.",
+        "A logged-out user can open a post detail and see its replies (filtered for hidden content as appropriate).",
+        "Write operations still reject unauthenticated callers."
+      ]
+    }
+  ],
+  "constraints": [
+    "Backend must remain single-actor Motoko with all logic in backend/main.mo (do not introduce additional services).",
+    "Do not edit files under frontend/src/components/ui or any paths listed as frontend immutable hooks/entrypoints."
+  ],
+  "nonGoals": [
+    "Do not implement new forum features (mentions, threaded replies, search, notifications) as part of this fix.",
+    "Do not change admin moderation behavior beyond preventing the /admin page from crashing when unauthorized.",
+    "Do not introduce external databases, third-party auth providers, websockets, or push notifications."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

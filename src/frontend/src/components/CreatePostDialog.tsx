@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useCreatePost } from '../hooks/useQueries';
+import { useGDPRCompliance } from '../hooks/useGDPRCompliance';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Category } from '../backend';
 import { toast } from 'sonner';
+import RulesAcceptanceDialog from './RulesAcceptanceDialog';
 
 interface CreatePostDialogProps {
   open: boolean;
@@ -27,6 +29,13 @@ export default function CreatePostDialog({ open, onOpenChange }: CreatePostDialo
   const [content, setContent] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const createPost = useCreatePost();
+  const { 
+    showRulesDialog, 
+    isSubmitting, 
+    checkComplianceAndExecute, 
+    handleAcceptRules, 
+    handleCancelRules 
+  } = useGDPRCompliance();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,77 +45,91 @@ export default function CreatePostDialog({ open, onOpenChange }: CreatePostDialo
       return;
     }
 
-    try {
+    const executeCreatePost = async () => {
       await createPost.mutateAsync({ category, content: content.trim(), isAnonymous });
       toast.success('Ton message est publié !');
       onOpenChange(false);
       setContent('');
       setIsAnonymous(false);
-    } catch (error) {
-      toast.error('Oups, une erreur est survenue. Réessaie ?');
+    };
+
+    try {
+      await checkComplianceAndExecute('createPost', executeCreatePost);
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Oups, une erreur est survenue. Réessaie ?';
+      toast.error(errorMessage);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Partage ton expérience</DialogTitle>
-          <DialogDescription>
-            Pose une question, raconte ton quotidien ou partage un conseil.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="category">Catégorie</Label>
-            <Select value={category} onValueChange={(value) => setCategory(value as Category)}>
-              <SelectTrigger id="category">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORY_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="content">Ton message</Label>
-            <Textarea
-              id="content"
-              placeholder="Raconte ce qui te passe par la tête..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={6}
-              className="resize-none"
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-            <div className="space-y-0.5">
-              <Label htmlFor="anonymous" className="text-sm font-medium">Rester anonyme</Label>
-              <p className="text-xs text-muted-foreground">Ton nom ne sera pas affiché</p>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Partage ton expérience</DialogTitle>
+            <DialogDescription>
+              Pose une question, raconte ton quotidien ou partage un conseil.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">Catégorie</Label>
+              <Select value={category} onValueChange={(value) => setCategory(value as Category)}>
+                <SelectTrigger id="category">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <Switch
-              id="anonymous"
-              checked={isAnonymous}
-              onCheckedChange={setIsAnonymous}
-            />
-          </div>
 
-          <div className="flex gap-3 justify-end">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Annuler
-            </Button>
-            <Button type="submit" disabled={createPost.isPending}>
-              {createPost.isPending ? 'Envoi...' : 'Publier'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <div className="space-y-2">
+              <Label htmlFor="content">Ton message</Label>
+              <Textarea
+                id="content"
+                placeholder="Raconte ce qui te passe par la tête..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={6}
+                className="resize-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+              <div className="space-y-0.5">
+                <Label htmlFor="anonymous" className="text-sm font-medium">Rester anonyme</Label>
+                <p className="text-xs text-muted-foreground">Ton nom ne sera pas affiché</p>
+              </div>
+              <Switch
+                id="anonymous"
+                checked={isAnonymous}
+                onCheckedChange={setIsAnonymous}
+              />
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Annuler
+              </Button>
+              <Button type="submit" disabled={createPost.isPending}>
+                {createPost.isPending ? 'Envoi...' : 'Publier'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <RulesAcceptanceDialog
+        open={showRulesDialog}
+        onOpenChange={handleCancelRules}
+        onAccept={handleAcceptRules}
+        isSubmitting={isSubmitting}
+      />
+    </>
   );
 }

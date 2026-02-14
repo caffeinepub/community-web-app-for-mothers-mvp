@@ -25,6 +25,7 @@ export interface Reply {
     content: string;
     isAnonymous: boolean;
     author: string;
+    isHidden: boolean;
     timestamp: Time;
     postId: bigint;
 }
@@ -34,6 +35,7 @@ export interface Listing {
     region: Region;
     categories: Array<string>;
     title: string;
+    favorites: Array<Principal>;
     description: string;
     author: string;
     timestamp: Time;
@@ -42,13 +44,57 @@ export interface Listing {
     condition: ProductCondition;
     images: Array<ExternalBlob>;
 }
+export interface AdminModerationItem {
+    id: bigint;
+    contentId: bigint;
+    reportCount: bigint;
+    contentType: string;
+    author: string;
+    timestamp: Time;
+    excerpt: string;
+}
+export type Region = {
+    __kind__: "swissCanton";
+    swissCanton: SwissCanton;
+} | {
+    __kind__: "frenchRegion";
+    frenchRegion: FrenchRegion;
+};
+export interface AdminReportedContent {
+    id: bigint;
+    contentId: bigint;
+    content: string;
+    reportCount: bigint;
+    contentType: AdminReportType;
+    author: string;
+    isHidden: boolean;
+    timestamp: Time;
+}
+export interface AdminStats {
+    franceUsers: bigint;
+    totalForumPosts: bigint;
+    activeListings: bigint;
+    reportedContentCount: bigint;
+    totalUsers: bigint;
+    switzerlandUsers: bigint;
+    totalComments: bigint;
+    newUsersLast7Days: bigint;
+}
 export interface Post {
     id: bigint;
     content: string;
     isAnonymous: boolean;
     author: string;
+    isHidden: boolean;
     timestamp: Time;
     category: Category;
+}
+export interface AdminActivityEntry {
+    id: bigint;
+    activityType: AdminActivityType;
+    content: string;
+    author: string;
+    timestamp: Time;
 }
 export interface Message {
     id: bigint;
@@ -59,12 +105,28 @@ export interface Message {
 }
 export interface UserProfile {
     bio?: string;
+    region?: Region;
     status: MotherhoodStatus;
     country?: Country;
     favorites: Array<bigint>;
+    marketingOptIn: boolean;
+    listings: Array<bigint>;
     name: string;
+    email?: string;
+    rulesAccepted: boolean;
+    posts: Array<bigint>;
     profilePicture?: ExternalBlob;
-    location?: Region;
+    registrationTime: Time;
+}
+export enum AdminActivityType {
+    secondHandListing = "secondHandListing",
+    forumPost = "forumPost",
+    comment = "comment",
+    userRegistration = "userRegistration"
+}
+export enum AdminReportType {
+    post = "post",
+    comment = "comment"
 }
 export enum Category {
     postpartum = "postpartum",
@@ -76,6 +138,21 @@ export enum Category {
 export enum Country {
     france = "france",
     switzerland = "switzerland"
+}
+export enum FrenchRegion {
+    bourgogneFrancheComte = "bourgogneFrancheComte",
+    corse = "corse",
+    auvergneRhoneAlpes = "auvergneRhoneAlpes",
+    centreValDeLoire = "centreValDeLoire",
+    paysDeLaLoire = "paysDeLaLoire",
+    hautsDeFrance = "hautsDeFrance",
+    normandie = "normandie",
+    ileDeFrance = "ileDeFrance",
+    occitanie = "occitanie",
+    nouvelleAquitaine = "nouvelleAquitaine",
+    provenceAlpesCoteAzur = "provenceAlpesCoteAzur",
+    bretagne = "bretagne",
+    grandEst = "grandEst"
 }
 export enum MotherhoodStatus {
     adultChildren = "adultChildren",
@@ -91,7 +168,7 @@ export enum ProductCondition {
     good = "good",
     used = "used"
 }
-export enum Region {
+export enum SwissCanton {
     fribourg = "fribourg",
     jura = "jura",
     vaud = "vaud",
@@ -105,34 +182,37 @@ export enum UserRole {
     guest = "guest"
 }
 export interface backendInterface {
+    adminGetAllContentForModeration(): Promise<Array<AdminModerationItem>>;
+    adminGetRecentActivity(): Promise<Array<AdminActivityEntry>>;
+    adminGetReportedContent(): Promise<Array<AdminReportedContent>>;
+    adminGetStats(): Promise<AdminStats>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    countryIsFrance(): Promise<boolean>;
-    countryIsSwitzerland(): Promise<boolean>;
     createListing(title: string, description: string, price: bigint, condition: ProductCondition, region: Region, categories: Array<string>, ageGroup: string, images: Array<ExternalBlob>): Promise<bigint>;
     createPost(category: Category, content: string, isAnonymous: boolean): Promise<bigint>;
     createReply(postId: bigint, content: string, isAnonymous: boolean): Promise<bigint>;
     getAllConversations(): Promise<Array<Conversation>>;
-    getAllListings(): Promise<Array<Listing>>;
-    getAllPosts(): Promise<Array<Post>>;
-    getCallerCountry(): Promise<Country | null>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getConversation(participant: Principal): Promise<Conversation | null>;
+    getCurrentPrincipalId(): Promise<string>;
     getFavoritedListings(): Promise<Array<Listing>>;
-    getListing(listingId: bigint): Promise<Listing>;
-    getListingCount(): Promise<bigint>;
-    getListingsByCondition(condition: ProductCondition): Promise<Array<Listing>>;
-    getListingsByRegion(region: Region): Promise<Array<Listing>>;
-    getPost(postId: bigint): Promise<Post>;
-    getPostsByCategory(category: Category): Promise<Array<Post>>;
+    getPublicAllListings(): Promise<Array<Listing>>;
+    getPublicAllPosts(): Promise<Array<Post>>;
+    getPublicListing(listingId: bigint): Promise<Listing>;
+    getPublicListingsByCondition(condition: ProductCondition): Promise<Array<Listing>>;
+    getPublicListingsByRegion(region: Region): Promise<Array<Listing>>;
+    getPublicPost(postId: bigint): Promise<Post>;
+    getPublicPostsByCategory(category: Category): Promise<Array<Post>>;
     getRepliesByPost(postId: bigint): Promise<Array<Reply>>;
     getUserActivity(user: Principal): Promise<{
         listings: Array<Listing>;
         posts: Array<Post>;
     }>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    isAdmin(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     isFavorite(listingId: bigint): Promise<boolean>;
+    reportContent(contentType: AdminReportType, contentId: bigint): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     sendMessage(receiver: Principal, content: string): Promise<bigint>;
     toggleFavorite(listingId: bigint): Promise<boolean>;

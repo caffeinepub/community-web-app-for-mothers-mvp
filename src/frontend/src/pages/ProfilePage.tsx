@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MessageCircle, Heart, User } from 'lucide-react';
-import { useGetUserProfile, useGetCallerUserProfile } from '../hooks/useQueries';
+import { useGetUserProfile, useGetCallerUserProfile, useGetCurrentPrincipalId } from '../hooks/useQueries';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useQuery } from '@tanstack/react-query';
 import { useActor } from '../hooks/useActor';
@@ -40,6 +40,9 @@ export default function ProfilePage({ userPrincipal, onOpenChat, onBack, onViewP
   
   // Fetch other user's profile if viewing someone else's profile
   const { data: otherUserProfile, isLoading: otherUserProfileLoading } = useGetUserProfile(userPrincipal);
+
+  // Fetch current principal ID (only for own profile)
+  const { data: principalId } = useGetCurrentPrincipalId();
 
   // Use the appropriate profile based on whether it's own profile or not
   const userProfile = isOwnProfile ? callerProfile : otherUserProfile;
@@ -79,24 +82,44 @@ export default function ProfilePage({ userPrincipal, onOpenChat, onBack, onViewP
 
   const getRegionLabel = (region: Region | undefined) => {
     if (!region) return null;
-    const labels: Record<Region, string> = {
-      geneva: 'Genève',
-      vaud: 'Vaud',
-      valais: 'Valais',
-      fribourg: 'Fribourg',
-      neuchatel: 'Neuchâtel',
-      jura: 'Jura',
-    };
-    return labels[region];
+    
+    if (region.__kind__ === 'swissCanton') {
+      switch (region.swissCanton) {
+        case 'geneva': return 'Genève';
+        case 'vaud': return 'Vaud';
+        case 'valais': return 'Valais';
+        case 'fribourg': return 'Fribourg';
+        case 'neuchatel': return 'Neuchâtel';
+        case 'jura': return 'Jura';
+        default: return null;
+      }
+    } else {
+      switch (region.frenchRegion) {
+        case 'auvergneRhoneAlpes': return 'Auvergne-Rhône-Alpes';
+        case 'bourgogneFrancheComte': return 'Bourgogne-Franche-Comté';
+        case 'bretagne': return 'Bretagne';
+        case 'centreValDeLoire': return 'Centre-Val de Loire';
+        case 'corse': return 'Corse';
+        case 'grandEst': return 'Grand Est';
+        case 'hautsDeFrance': return 'Hauts-de-France';
+        case 'ileDeFrance': return 'Ile-de-France';
+        case 'normandie': return 'Normandie';
+        case 'nouvelleAquitaine': return 'Nouvelle-Aquitaine';
+        case 'occitanie': return 'Occitanie';
+        case 'paysDeLaLoire': return 'Pays de la Loire';
+        case 'provenceAlpesCoteAzur': return 'Provence-Alpes-Côte d\'Azur';
+        default: return null;
+      }
+    }
   };
 
   const getCountryLabel = (country: Country | undefined) => {
     if (!country) return null;
-    const labels: Record<Country, string> = {
-      switzerland: 'Suisse',
-      france: 'France',
-    };
-    return labels[country];
+    switch (country) {
+      case 'switzerland': return 'Suisse';
+      case 'france': return 'France';
+      default: return null;
+    }
   };
 
   const getMotherhoodStatusLabel = (status: MotherhoodStatus) => {
@@ -186,9 +209,9 @@ export default function ProfilePage({ userPrincipal, onOpenChat, onBack, onViewP
                         {getCountryLabel(userProfile.country)}
                       </Badge>
                     )}
-                    {userProfile.location && (
+                    {userProfile.region && (
                       <Badge variant="secondary" className="bg-marketplace/10 text-marketplace border-0">
-                        {getRegionLabel(userProfile.location)}
+                        {getRegionLabel(userProfile.region)}
                       </Badge>
                     )}
                     <Badge variant="secondary" className="bg-marketplace/10 text-marketplace border-0">
@@ -317,6 +340,15 @@ export default function ProfilePage({ userPrincipal, onOpenChat, onBack, onViewP
             </TabsContent>
           )}
         </Tabs>
+
+        {/* Principal ID Display (only for own profile) */}
+        {isOwnProfile && principalId && (
+          <div className="mt-8 pt-6 border-t border-border/30">
+            <p className="text-xs text-muted-foreground/60 text-center">
+              Ton identifiant (Principal ID) : {principalId}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Edit Profile Dialog */}
