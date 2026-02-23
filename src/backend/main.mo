@@ -16,8 +16,6 @@ import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
 
-// Apply migration here
-
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -740,7 +738,7 @@ actor {
       };
       case (?userProfile) {
         let isAdminUser = AccessControl.isAdmin(accessControlState, caller);
-        
+
         let userListings = listings.values().toArray().filter(
           func(listing) {
             listing.author == userProfile.name;
